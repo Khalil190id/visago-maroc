@@ -335,6 +335,6 @@ export default {
     // =========================
     // WEBSITE
     // =========================
-    return env.ASSETS.fetch(request);
+return new Response("Not Found", { status: 404 });
   }
 };

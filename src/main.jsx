@@ -1,8 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
 
 function App() {
+  const [submitted, setSubmitted] = useState(false);
+  const [reference, setReference] = useState("");
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const number = Math.floor(100000 + Math.random() * 900000);
+    const ref = `VGM-2026-${number}`;
+
+    setReference(ref);
+    setSubmitted(true);
+  };
+
   return (
     <div className="app">
       <header className="header">
@@ -12,7 +25,7 @@ function App() {
 
         <nav>
           <a href="#services">Services</a>
-          <a href="#visa">E-Visa</a>
+          <a href="#visa">Demande Visa</a>
           <a href="#tracking">Suivi</a>
           <a href="#contact">Contact</a>
         </nav>
@@ -32,8 +45,8 @@ function App() {
             </h1>
 
             <p>
-              Demandez votre visa, préparez votre dossier et organisez votre
-              voyage facilement avec VisaGo Maroc.
+              Déposez votre demande de visa facilement et préparez votre
+              dossier avec VisaGo Maroc.
             </p>
 
             <div className="hero-buttons">
@@ -50,7 +63,7 @@ function App() {
           <div className="hero-card">
             <div className="passport-icon">✈️</div>
             <h3>VisaGo Maroc</h3>
-            <p>Une plateforme simple pour préparer votre voyage.</p>
+            <p>Votre assistant pour vos démarches de voyage.</p>
 
             <div className="mini-status">
               <span>✓</span>
@@ -76,51 +89,249 @@ function App() {
           </div>
 
           <div className="services-grid">
-            <Service icon="🛂" title="E-Visa" text="Découvrez les destinations proposant des visas électroniques." />
-            <Service icon="📄" title="Assistance Visa" text="Préparez votre dossier avec notre accompagnement." />
-            <Service icon="✈️" title="Vols" text="Solutions de réservation et documents pour votre voyage." />
-            <Service icon="🏨" title="Hôtels" text="Trouvez et préparez votre hébergement." />
-            <Service icon="🛡️" title="Assurance Voyage" text="Préparez votre assurance voyage." />
-            <Service icon="📁" title="Packs Visa" text="Des services regroupés pour simplifier votre dossier." />
+            <Service
+              icon="🛂"
+              title="E-Visa"
+              text="Découvrez les destinations proposant des visas électroniques."
+            />
+
+            <Service
+              icon="📄"
+              title="Assistance Visa"
+              text="Préparez votre dossier avec notre accompagnement."
+            />
+
+            <Service
+              icon="✈️"
+              title="Vols"
+              text="Solutions de réservation pour votre voyage."
+            />
+
+            <Service
+              icon="🏨"
+              title="Hôtels"
+              text="Préparez votre hébergement."
+            />
+
+            <Service
+              icon="🛡️"
+              title="Assurance Voyage"
+              text="Préparez votre assurance voyage."
+            />
+
+            <Service
+              icon="📁"
+              title="Packs Visa"
+              text="Des services regroupés pour simplifier votre dossier."
+            />
           </div>
         </section>
 
         <section id="visa" className="visa-section">
-          <div>
-            <span className="section-label">VISA</span>
-            <h2>Commencez votre demande</h2>
+          <div className="section-title">
+            <span>DEMANDE DE VISA</span>
+            <h2>Déposez votre demande</h2>
             <p>
-              Sélectionnez votre destination et commencez votre dossier.
+              Remplissez les informations ci-dessous. Notre équipe pourra
+              ensuite examiner votre dossier.
             </p>
           </div>
 
-          <div className="visa-form">
-            <label>Destination</label>
-            <select>
-              <option>Sélectionnez une destination</option>
-              <option>Arabie Saoudite</option>
-              <option>Turquie</option>
-              <option>Égypte</option>
-              <option>Bahreïn</option>
-              <option>Autres destinations</option>
-            </select>
+          {!submitted ? (
+            <form className="visa-form" onSubmit={handleSubmit}>
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Prénom *</label>
+                  <input
+                    type="text"
+                    name="firstName"
+                    placeholder="Votre prénom"
+                    required
+                  />
+                </div>
 
-            <button className="btn primary">
-              Continuer
-            </button>
-          </div>
+                <div className="form-group">
+                  <label>Nom *</label>
+                  <input
+                    type="text"
+                    name="lastName"
+                    placeholder="Votre nom"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Date de naissance *</label>
+                  <input type="date" name="birthDate" required />
+                </div>
+
+                <div className="form-group">
+                  <label>Nationalité *</label>
+                  <input
+                    type="text"
+                    name="nationality"
+                    placeholder="Exemple : Marocaine"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Numéro de passeport *</label>
+                  <input
+                    type="text"
+                    name="passport"
+                    placeholder="Numéro du passeport"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Date d'expiration du passeport *</label>
+                  <input type="date" name="passportExpiry" required />
+                </div>
+
+                <div className="form-group">
+                  <label>Téléphone / WhatsApp *</label>
+                  <input
+                    type="tel"
+                    name="phone"
+                    placeholder="+212 6 XX XX XX XX"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Email *</label>
+                  <input
+                    type="email"
+                    name="email"
+                    placeholder="exemple@email.com"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Destination *</label>
+                  <select name="destination" required>
+                    <option value="">Sélectionnez une destination</option>
+                    <option>Arabie Saoudite</option>
+                    <option>Turquie</option>
+                    <option>Égypte</option>
+                    <option>Bahreïn</option>
+                    <option>Émirats Arabes Unis</option>
+                    <option>Royaume-Uni</option>
+                    <option>Europe / Schengen</option>
+                    <option>Autre destination</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Type de visa *</label>
+                  <select name="visaType" required>
+                    <option value="">Sélectionnez le type</option>
+                    <option>Tourisme</option>
+                    <option>Affaires</option>
+                    <option>Visite familiale</option>
+                    <option>Transit</option>
+                    <option>Autre</option>
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Date prévue du voyage *</label>
+                  <input type="date" name="travelDate" required />
+                </div>
+
+                <div className="form-group">
+                  <label>Nombre de voyageurs *</label>
+                  <input
+                    type="number"
+                    name="travellers"
+                    min="1"
+                    max="20"
+                    placeholder="1"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group full">
+                <label>Documents</label>
+                <input
+                  type="file"
+                  name="documents"
+                  multiple
+                  accept=".pdf,.jpg,.jpeg,.png"
+                />
+                <small>
+                  Formats acceptés : PDF, JPG, JPEG, PNG
+                </small>
+              </div>
+
+              <div className="form-group full">
+                <label>Message / Informations supplémentaires</label>
+                <textarea
+                  name="message"
+                  rows="5"
+                  placeholder="Écrivez votre message..."
+                ></textarea>
+              </div>
+
+              <div className="form-check">
+                <input type="checkbox" id="privacy" required />
+                <label htmlFor="privacy">
+                  J'accepte que mes informations soient utilisées pour traiter
+                  ma demande.
+                </label>
+              </div>
+
+              <button type="submit" className="btn primary submit-btn">
+                Envoyer ma demande →
+              </button>
+            </form>
+          ) : (
+            <div className="success-box">
+              <div className="success-icon">✓</div>
+
+              <h2>Demande enregistrée</h2>
+
+              <p>
+                Votre demande a été préparée avec succès.
+              </p>
+
+              <div className="reference">
+                <span>Votre numéro de dossier</span>
+                <strong>{reference}</strong>
+              </div>
+
+              <p>
+                Conservez précieusement ce numéro pour suivre votre dossier.
+              </p>
+
+              <button
+                className="btn secondary"
+                onClick={() => {
+                  setSubmitted(false);
+                  setReference("");
+                }}
+              >
+                Nouvelle demande
+              </button>
+            </div>
+          )}
         </section>
 
         <section id="tracking" className="tracking section">
           <div className="section-title">
-            <span>Suivi</span>
+            <span>SUivi</span>
             <h2>Suivez votre dossier</h2>
+            <p>Entrez votre numéro de dossier.</p>
           </div>
 
           <div className="tracking-box">
             <input
               type="text"
-              placeholder="Exemple : VGM-2026-000123"
+              placeholder="Exemple : VGM-2026-123456"
             />
 
             <button className="btn primary">

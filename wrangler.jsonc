@@ -3,7 +3,6 @@
   "name": "visago-maroc",
   "main": "./worker.js",
   "compatibility_date": "2026-09-17",
-
   "keep_vars": true,
 
   "assets": {

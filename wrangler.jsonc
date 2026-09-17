@@ -18,11 +18,5 @@
       "database_name": "visago-maroc-db",
       "database_id": "ab6bbe35-d583-4edb-8d89-769da17b7280"
     }
-  ],
-
-  "secrets": {
-    "required": [
-      "ADMIN_PASSWORD"
-    ]
-  }
+  ]
 }

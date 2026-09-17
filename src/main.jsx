@@ -5,15 +5,103 @@ import "./styles.css";
 function App() {
   const [submitted, setSubmitted] = useState(false);
   const [reference, setReference] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const [trackingRef, setTrackingRef] = useState("");
+  const [trackingResult, setTrackingResult] = useState(null);
+  const [trackingLoading, setTrackingLoading] = useState(false);
+  const [trackingError, setTrackingError] = useState("");
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
-    const number = Math.floor(100000 + Math.random() * 900000);
-    const ref = `VGM-2026-${number}`;
+    setLoading(true);
+    setError("");
 
-    setReference(ref);
-    setSubmitted(true);
+    const form = e.currentTarget;
+    const formData = new FormData(form);
+
+    const data = {
+      first_name: formData.get("firstName"),
+      last_name: formData.get("lastName"),
+      birth_date: formData.get("birthDate"),
+      nationality: formData.get("nationality"),
+      passport: formData.get("passport"),
+      passport_expiry: formData.get("passportExpiry"),
+      phone: formData.get("phone"),
+      email: formData.get("email"),
+      destination: formData.get("destination"),
+      visa_type: formData.get("visaType"),
+      travel_date: formData.get("travelDate"),
+      travellers: Number(formData.get("travellers")) || 1,
+      message: formData.get("message")
+    };
+
+    try {
+      const response = await fetch("/api/visa", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(data)
+      });
+
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        throw new Error(
+          result.error || "Une erreur est survenue. Veuillez réessayer."
+        );
+      }
+
+      setReference(result.reference);
+      setSubmitted(true);
+      form.reset();
+    } catch (err) {
+      setError(
+        err.message ||
+          "Impossible d'envoyer la demande. Veuillez réessayer."
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTracking = async () => {
+    if (!trackingRef.trim()) {
+      setTrackingError("Veuillez saisir votre numéro de dossier.");
+      setTrackingResult(null);
+      return;
+    }
+
+    setTrackingLoading(true);
+    setTrackingError("");
+    setTrackingResult(null);
+
+    try {
+      const response = await fetch(
+        `/api/visa?reference=${encodeURIComponent(
+          trackingRef.trim().toUpperCase()
+        )}`
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.ok) {
+        throw new Error(
+          result.error || "Dossier introuvable."
+        );
+      }
+
+      setTrackingResult(result.request);
+    } catch (err) {
+      setTrackingError(
+        err.message || "Impossible de rechercher le dossier."
+      );
+    } finally {
+      setTrackingLoading(false);
+    }
   };
 
   return (
@@ -162,7 +250,11 @@ function App() {
 
                 <div className="form-group">
                   <label>Date de naissance *</label>
-                  <input type="date" name="birthDate" required />
+                  <input
+                    type="date"
+                    name="birthDate"
+                    required
+                  />
                 </div>
 
                 <div className="form-group">
@@ -187,7 +279,11 @@ function App() {
 
                 <div className="form-group">
                   <label>Date d'expiration du passeport *</label>
-                  <input type="date" name="passportExpiry" required />
+                  <input
+                    type="date"
+                    name="passportExpiry"
+                    required
+                  />
                 </div>
 
                 <div className="form-group">
@@ -213,7 +309,9 @@ function App() {
                 <div className="form-group">
                   <label>Destination *</label>
                   <select name="destination" required>
-                    <option value="">Sélectionnez une destination</option>
+                    <option value="">
+                      Sélectionnez une destination
+                    </option>
                     <option>Arabie Saoudite</option>
                     <option>Turquie</option>
                     <option>Égypte</option>
@@ -228,7 +326,9 @@ function App() {
                 <div className="form-group">
                   <label>Type de visa *</label>
                   <select name="visaType" required>
-                    <option value="">Sélectionnez le type</option>
+                    <option value="">
+                      Sélectionnez le type
+                    </option>
                     <option>Tourisme</option>
                     <option>Affaires</option>
                     <option>Visite familiale</option>
@@ -239,7 +339,11 @@ function App() {
 
                 <div className="form-group">
                   <label>Date prévue du voyage *</label>
-                  <input type="date" name="travelDate" required />
+                  <input
+                    type="date"
+                    name="travelDate"
+                    required
+                  />
                 </div>
 
                 <div className="form-group">
@@ -249,7 +353,7 @@ function App() {
                     name="travellers"
                     min="1"
                     max="20"
-                    placeholder="1"
+                    defaultValue="1"
                     required
                   />
                 </div>
@@ -269,7 +373,10 @@ function App() {
               </div>
 
               <div className="form-group full">
-                <label>Message / Informations supplémentaires</label>
+                <label>
+                  Message / Informations supplémentaires
+                </label>
+
                 <textarea
                   name="message"
                   rows="5"
@@ -278,15 +385,32 @@ function App() {
               </div>
 
               <div className="form-check">
-                <input type="checkbox" id="privacy" required />
+                <input
+                  type="checkbox"
+                  id="privacy"
+                  required
+                />
+
                 <label htmlFor="privacy">
-                  J'accepte que mes informations soient utilisées pour traiter
-                  ma demande.
+                  J'accepte que mes informations soient utilisées
+                  pour traiter ma demande.
                 </label>
               </div>
 
-              <button type="submit" className="btn primary submit-btn">
-                Envoyer ma demande →
+              {error && (
+                <div className="error-box">
+                  ❌ {error}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                className="btn primary submit-btn"
+                disabled={loading}
+              >
+                {loading
+                  ? "Envoi en cours..."
+                  : "Envoyer ma demande →"}
               </button>
             </form>
           ) : (
@@ -296,7 +420,7 @@ function App() {
               <h2>Demande enregistrée</h2>
 
               <p>
-                Votre demande a été préparée avec succès.
+                Votre demande a été enregistrée avec succès.
               </p>
 
               <div className="reference">
@@ -305,7 +429,8 @@ function App() {
               </div>
 
               <p>
-                Conservez précieusement ce numéro pour suivre votre dossier.
+                Conservez précieusement ce numéro pour suivre
+                votre dossier.
               </p>
 
               <button
@@ -313,6 +438,7 @@ function App() {
                 onClick={() => {
                   setSubmitted(false);
                   setReference("");
+                  setError("");
                 }}
               >
                 Nouvelle demande
@@ -323,27 +449,79 @@ function App() {
 
         <section id="tracking" className="tracking section">
           <div className="section-title">
-            <span>SUivi</span>
+            <span>SUIVI</span>
             <h2>Suivez votre dossier</h2>
-            <p>Entrez votre numéro de dossier.</p>
+            <p>
+              Entrez votre numéro de dossier.
+            </p>
           </div>
 
           <div className="tracking-box">
             <input
               type="text"
+              value={trackingRef}
+              onChange={(e) =>
+                setTrackingRef(e.target.value)
+              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleTracking();
+                }
+              }}
               placeholder="Exemple : VGM-2026-123456"
             />
 
-            <button className="btn primary">
-              Rechercher
+            <button
+              className="btn primary"
+              onClick={handleTracking}
+              disabled={trackingLoading}
+            >
+              {trackingLoading
+                ? "Recherche..."
+                : "Rechercher"}
             </button>
           </div>
+
+          {trackingError && (
+            <div className="error-box tracking-result">
+              ❌ {trackingError}
+            </div>
+          )}
+
+          {trackingResult && (
+            <div className="tracking-result success-box">
+              <div className="success-icon">✓</div>
+
+              <h3>Dossier trouvé</h3>
+
+              <p>
+                Référence :{" "}
+                <strong>{trackingResult.reference}</strong>
+              </p>
+
+              <p>
+                Statut :{" "}
+                <strong>{trackingResult.status}</strong>
+              </p>
+
+              <p>
+                Date de réception :{" "}
+                <strong>
+                  {new Date(
+                    trackingResult.created_at
+                  ).toLocaleDateString("fr-FR")}
+                </strong>
+              </p>
+            </div>
+          )}
         </section>
 
         <section id="contact" className="contact section">
           <div>
             <span>Besoin d'aide ?</span>
-            <h2>Notre équipe est à votre disposition.</h2>
+            <h2>
+              Notre équipe est à votre disposition.
+            </h2>
           </div>
 
           <a
@@ -362,7 +540,9 @@ function App() {
           <span>V</span> VisaGo Maroc
         </div>
 
-        <p>© 2026 VisaGo Maroc. Tous droits réservés.</p>
+        <p>
+          © 2026 VisaGo Maroc. Tous droits réservés.
+        </p>
       </footer>
     </div>
   );
@@ -372,14 +552,21 @@ function Service({ icon, title, text }) {
   return (
     <div className="service-card">
       <div className="service-icon">{icon}</div>
+
       <h3>{title}</h3>
+
       <p>{text}</p>
-      <a href="#visa">Découvrir →</a>
+
+      <a href="#visa">
+        Découvrir →
+      </a>
     </div>
   );
 }
 
-createRoot(document.getElementById("root")).render(
+createRoot(
+  document.getElementById("root")
+).render(
   <React.StrictMode>
     <App />
   </React.StrictMode>

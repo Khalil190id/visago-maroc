@@ -3,9 +3,12 @@ export default {
     const url = new URL(request.url);
 
     // =========================
-    // PUBLIC API - CREATE VISA
+    // CREATE VISA REQUEST
     // =========================
-    if (url.pathname === "/api/visa" && request.method === "POST") {
+    if (
+      url.pathname === "/api/visa" &&
+      request.method === "POST"
+    ) {
       try {
         const data = await request.json();
 
@@ -28,7 +31,10 @@ export default {
           "VGM-" +
           new Date().getFullYear() +
           "-" +
-          crypto.randomUUID().slice(0, 8).toUpperCase();
+          crypto
+            .randomUUID()
+            .slice(0, 8)
+            .toUpperCase();
 
         await env.DB.prepare(`
           INSERT INTO visa_requests (
@@ -72,8 +78,6 @@ export default {
           reference
         });
       } catch (error) {
-        console.error(error);
-
         return Response.json(
           {
             ok: false,
@@ -85,56 +89,92 @@ export default {
     }
 
     // =========================
-    // PUBLIC API - TRACKING
+    // TRACK VISA REQUEST
     // =========================
-    if (url.pathname === "/api/visa" && request.method === "GET") {
-      const reference = url.searchParams.get("reference");
+    if (
+      url.pathname === "/api/visa" &&
+      request.method === "GET"
+    ) {
+      try {
+        const reference =
+          url.searchParams
+            .get("reference")
+            ?.trim()
+            .toUpperCase();
 
-      if (!reference) {
+        if (!reference) {
+          return Response.json(
+            {
+              ok: false,
+              error: "Référence manquante"
+            },
+            { status: 400 }
+          );
+        }
+
+        const result = await env.DB.prepare(`
+          SELECT reference, status, created_at
+          FROM visa_requests
+          WHERE reference = ?
+        `)
+          .bind(reference)
+          .first();
+
+        if (!result) {
+          return Response.json(
+            {
+              ok: false,
+              error: "Demande introuvable"
+            },
+            { status: 404 }
+          );
+        }
+
+        return Response.json({
+          ok: true,
+          request: result
+        });
+      } catch (error) {
         return Response.json(
           {
             ok: false,
-            error: "Référence manquante"
+            error: "Erreur serveur"
           },
-          { status: 400 }
+          { status: 500 }
         );
       }
-
-      const result = await env.DB.prepare(`
-        SELECT reference, status, created_at
-        FROM visa_requests
-        WHERE reference = ?
-      `)
-        .bind(reference.trim().toUpperCase())
-        .first();
-
-      if (!result) {
-        return Response.json(
-          {
-            ok: false,
-            error: "Dossier introuvable"
-          },
-          { status: 404 }
-        );
-      }
-
-      return Response.json({
-        ok: true,
-        request: result
-      });
     }
 
     // =========================
-    // ADMIN AUTH
+    // ADMIN LOGIN
     // =========================
-    if (url.pathname === "/api/admin/login" && request.method === "POST") {
+    if (
+      url.pathname === "/api/admin/login" &&
+      request.method === "POST"
+    ) {
       try {
         const data = await request.json();
 
-        if (
-          !data.password ||
-          data.password !== env.ADMIN_PASSWORD
-        ) {
+        const password = String(
+          data.password || ""
+        ).trim();
+
+        const adminPassword = String(
+          env.ADMIN_PASSWORD || ""
+        ).trim();
+
+        if (!adminPassword) {
+          return Response.json(
+            {
+              ok: false,
+              error:
+                "ADMIN_PASSWORD n'est pas configuré dans Cloudflare."
+            },
+            { status: 500 }
+          );
+        }
+
+        if (password !== adminPassword) {
           return Response.json(
             {
               ok: false,
@@ -145,29 +185,34 @@ export default {
         }
 
         return Response.json({
-          ok: true
+          ok: true,
+          message: "Connexion réussie"
         });
-      } catch {
+      } catch (error) {
         return Response.json(
           {
             ok: false,
-            error: "Requête invalide"
+            error: "Erreur de connexion"
           },
-          { status: 400 }
+          { status: 500 }
         );
       }
     }
 
     // =========================
-    // ADMIN - LIST REQUESTS
+    // ADMIN - GET REQUESTS
     // =========================
     if (
       url.pathname === "/api/admin/requests" &&
       request.method === "GET"
     ) {
-      const password = request.headers.get("X-Admin-Password");
+      const password =
+        request.headers.get("X-Admin-Password") || "";
 
-      if (!password || password !== env.ADMIN_PASSWORD) {
+      if (
+        String(password).trim() !==
+        String(env.ADMIN_PASSWORD || "").trim()
+      ) {
         return Response.json(
           {
             ok: false,
@@ -206,8 +251,6 @@ export default {
           requests: result.results || []
         });
       } catch (error) {
-        console.error(error);
-
         return Response.json(
           {
             ok: false,
@@ -225,9 +268,13 @@ export default {
       url.pathname === "/api/admin/status" &&
       request.method === "POST"
     ) {
-      const password = request.headers.get("X-Admin-Password");
+      const password =
+        request.headers.get("X-Admin-Password") || "";
 
-      if (!password || password !== env.ADMIN_PASSWORD) {
+      if (
+        String(password).trim() !==
+        String(env.ADMIN_PASSWORD || "").trim()
+      ) {
         return Response.json(
           {
             ok: false,
@@ -260,33 +307,21 @@ export default {
           );
         }
 
-        const result = await env.DB.prepare(`
+        await env.DB.prepare(`
           UPDATE visa_requests
           SET status = ?
           WHERE reference = ?
         `)
           .bind(
             data.status,
-            data.reference.trim().toUpperCase()
+            data.reference
           )
           .run();
-
-        if (!result.meta.changes) {
-          return Response.json(
-            {
-              ok: false,
-              error: "Dossier introuvable"
-            },
-            { status: 404 }
-          );
-        }
 
         return Response.json({
           ok: true
         });
       } catch (error) {
-        console.error(error);
-
         return Response.json(
           {
             ok: false,

@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles.css";
+import Admin from "./Admin";
+
+const isAdminPage = window.location.pathname === "/admin";
 
 function App() {
   const [submitted, setSubmitted] = useState(false);
@@ -19,23 +22,22 @@ function App() {
     setLoading(true);
     setError("");
 
-    const form = e.currentTarget;
-    const formData = new FormData(form);
+    const form = new FormData(e.currentTarget);
 
     const data = {
-      first_name: formData.get("firstName"),
-      last_name: formData.get("lastName"),
-      birth_date: formData.get("birthDate"),
-      nationality: formData.get("nationality"),
-      passport: formData.get("passport"),
-      passport_expiry: formData.get("passportExpiry"),
-      phone: formData.get("phone"),
-      email: formData.get("email"),
-      destination: formData.get("destination"),
-      visa_type: formData.get("visaType"),
-      travel_date: formData.get("travelDate"),
-      travellers: Number(formData.get("travellers")) || 1,
-      message: formData.get("message")
+      first_name: form.get("firstName"),
+      last_name: form.get("lastName"),
+      birth_date: form.get("birthDate"),
+      nationality: form.get("nationality"),
+      passport: form.get("passport"),
+      passport_expiry: form.get("passportExpiry"),
+      phone: form.get("phone"),
+      email: form.get("email"),
+      destination: form.get("destination"),
+      visa_type: form.get("visaType"),
+      travel_date: form.get("travelDate"),
+      travellers: Number(form.get("travellers")) || 1,
+      message: form.get("message")
     };
 
     try {
@@ -50,30 +52,20 @@ function App() {
       const result = await response.json();
 
       if (!response.ok || !result.ok) {
-        throw new Error(
-          result.error || "Une erreur est survenue. Veuillez réessayer."
-        );
+        throw new Error(result.error || "Une erreur est survenue.");
       }
 
       setReference(result.reference);
       setSubmitted(true);
-      form.reset();
     } catch (err) {
-      setError(
-        err.message ||
-          "Impossible d'envoyer la demande. Veuillez réessayer."
-      );
+      setError(err.message || "Erreur serveur.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleTracking = async () => {
-    if (!trackingRef.trim()) {
-      setTrackingError("Veuillez saisir votre numéro de dossier.");
-      setTrackingResult(null);
-      return;
-    }
+  const trackRequest = async () => {
+    if (!trackingRef.trim()) return;
 
     setTrackingLoading(true);
     setTrackingError("");
@@ -89,16 +81,12 @@ function App() {
       const result = await response.json();
 
       if (!response.ok || !result.ok) {
-        throw new Error(
-          result.error || "Dossier introuvable."
-        );
+        throw new Error(result.error || "Dossier introuvable.");
       }
 
       setTrackingResult(result.request);
     } catch (err) {
-      setTrackingError(
-        err.message || "Impossible de rechercher le dossier."
-      );
+      setTrackingError(err.message || "Erreur.");
     } finally {
       setTrackingLoading(false);
     }
@@ -116,6 +104,7 @@ function App() {
           <a href="#visa">Demande Visa</a>
           <a href="#tracking">Suivi</a>
           <a href="#contact">Contact</a>
+          <a href="/admin">Admin</a>
         </nav>
 
         <button className="language">FR ▾</button>
@@ -150,7 +139,9 @@ function App() {
 
           <div className="hero-card">
             <div className="passport-icon">✈️</div>
+
             <h3>VisaGo Maroc</h3>
+
             <p>Votre assistant pour vos démarches de voyage.</p>
 
             <div className="mini-status">
@@ -218,7 +209,9 @@ function App() {
         <section id="visa" className="visa-section">
           <div className="section-title">
             <span>DEMANDE DE VISA</span>
+
             <h2>Déposez votre demande</h2>
+
             <p>
               Remplissez les informations ci-dessous. Notre équipe pourra
               ensuite examiner votre dossier.
@@ -308,10 +301,12 @@ function App() {
 
                 <div className="form-group">
                   <label>Destination *</label>
+
                   <select name="destination" required>
                     <option value="">
                       Sélectionnez une destination
                     </option>
+
                     <option>Arabie Saoudite</option>
                     <option>Turquie</option>
                     <option>Égypte</option>
@@ -319,26 +314,34 @@ function App() {
                     <option>Émirats Arabes Unis</option>
                     <option>Royaume-Uni</option>
                     <option>Europe / Schengen</option>
+                    <option>États-Unis</option>
+                    <option>Canada</option>
+                    <option>Australie</option>
                     <option>Autre destination</option>
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label>Type de visa *</label>
+
                   <select name="visaType" required>
                     <option value="">
                       Sélectionnez le type
                     </option>
+
                     <option>Tourisme</option>
                     <option>Affaires</option>
                     <option>Visite familiale</option>
                     <option>Transit</option>
+                    <option>Études</option>
+                    <option>Travail</option>
                     <option>Autre</option>
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label>Date prévue du voyage *</label>
+
                   <input
                     type="date"
                     name="travelDate"
@@ -348,12 +351,13 @@ function App() {
 
                 <div className="form-group">
                   <label>Nombre de voyageurs *</label>
+
                   <input
                     type="number"
                     name="travellers"
                     min="1"
                     max="20"
-                    defaultValue="1"
+                    placeholder="1"
                     required
                   />
                 </div>
@@ -361,12 +365,14 @@ function App() {
 
               <div className="form-group full">
                 <label>Documents</label>
+
                 <input
                   type="file"
                   name="documents"
                   multiple
                   accept=".pdf,.jpg,.jpeg,.png"
                 />
+
                 <small>
                   Formats acceptés : PDF, JPG, JPEG, PNG
                 </small>
@@ -381,7 +387,7 @@ function App() {
                   name="message"
                   rows="5"
                   placeholder="Écrivez votre message..."
-                ></textarea>
+                />
               </div>
 
               <div className="form-check">
@@ -425,6 +431,7 @@ function App() {
 
               <div className="reference">
                 <span>Votre numéro de dossier</span>
+
                 <strong>{reference}</strong>
               </div>
 
@@ -450,30 +457,33 @@ function App() {
         <section id="tracking" className="tracking section">
           <div className="section-title">
             <span>SUIVI</span>
+
             <h2>Suivez votre dossier</h2>
+
             <p>
-              Entrez votre numéro de dossier.
+              Entrez votre numéro de dossier pour connaître
+              l'état de votre demande.
             </p>
           </div>
 
           <div className="tracking-box">
             <input
               type="text"
+              placeholder="Exemple : VGM-2026-123456"
               value={trackingRef}
               onChange={(e) =>
                 setTrackingRef(e.target.value)
               }
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  handleTracking();
+                  trackRequest();
                 }
               }}
-              placeholder="Exemple : VGM-2026-123456"
             />
 
             <button
               className="btn primary"
-              onClick={handleTracking}
+              onClick={trackRequest}
               disabled={trackingLoading}
             >
               {trackingLoading
@@ -490,27 +500,23 @@ function App() {
 
           {trackingResult && (
             <div className="tracking-result success-box">
-              <div className="success-icon">✓</div>
-
-              <h3>Dossier trouvé</h3>
+              <h3>Dossier trouvé ✓</h3>
 
               <p>
-                Référence :{" "}
-                <strong>{trackingResult.reference}</strong>
+                <strong>Référence :</strong>{" "}
+                {trackingResult.reference}
               </p>
 
               <p>
-                Statut :{" "}
-                <strong>{trackingResult.status}</strong>
+                <strong>Statut :</strong>{" "}
+                {trackingResult.status}
               </p>
 
               <p>
-                Date de réception :{" "}
-                <strong>
-                  {new Date(
-                    trackingResult.created_at
-                  ).toLocaleDateString("fr-FR")}
-                </strong>
+                <strong>Date :</strong>{" "}
+                {new Date(
+                  trackingResult.created_at
+                ).toLocaleDateString("fr-FR")}
               </p>
             </div>
           )}
@@ -519,6 +525,7 @@ function App() {
         <section id="contact" className="contact section">
           <div>
             <span>Besoin d'aide ?</span>
+
             <h2>
               Notre équipe est à votre disposition.
             </h2>
@@ -564,10 +571,20 @@ function Service({ icon, title, text }) {
   );
 }
 
-createRoot(
-  document.getElementById("root")
-).render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
-);
+if (isAdminPage) {
+  createRoot(
+    document.getElementById("root")
+  ).render(
+    <React.StrictMode>
+      <Admin />
+    </React.StrictMode>
+  );
+} else {
+  createRoot(
+    document.getElementById("root")
+  ).render(
+    <React.StrictMode>
+      <App />
+    </React.StrictMode>
+  );
+}

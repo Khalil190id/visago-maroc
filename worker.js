@@ -2,14 +2,16 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    // API: إرسال طلب فيزا جديد
     if (url.pathname === "/api/visa" && request.method === "POST") {
       try {
         const data = await request.json();
 
         if (!data.first_name || !data.last_name || !data.phone || !data.destination) {
           return Response.json(
-            { ok: false, error: "Champs obligatoires manquants" },
+            {
+              ok: false,
+              error: "Champs obligatoires manquants"
+            },
             { status: 400 }
           );
         }
@@ -62,6 +64,8 @@ export default {
           reference
         });
       } catch (error) {
+        console.error(error);
+
         return Response.json(
           {
             ok: false,
@@ -72,13 +76,15 @@ export default {
       }
     }
 
-    // API: تتبع طلب الفيزا
     if (url.pathname === "/api/visa" && request.method === "GET") {
       const reference = url.searchParams.get("reference");
 
       if (!reference) {
         return Response.json(
-          { ok: false, error: "Référence manquante" },
+          {
+            ok: false,
+            error: "Référence manquante"
+          },
           { status: 400 }
         );
       }
@@ -93,7 +99,10 @@ export default {
 
       if (!result) {
         return Response.json(
-          { ok: false, error: "Demande introuvable" },
+          {
+            ok: false,
+            error: "Demande introuvable"
+          },
           { status: 404 }
         );
       }
@@ -104,7 +113,6 @@ export default {
       });
     }
 
-    // الموقع العادي
     return env.ASSETS.fetch(request);
   }
 };
